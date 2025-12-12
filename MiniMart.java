@@ -35,8 +35,7 @@ public class MiniMart {
     private void loadProducts() {
         File file = new File(PRODUCTS_FILE);
         if (!file.exists()) {
-            System.out.println("No existing products file found. Initializing with sample data...");
-            initializeSampleData();
+            System.out.println("No existing products file found. Starting with empty product catalog.");
             return;
         }
         
@@ -194,11 +193,26 @@ public class MiniMart {
         Product newProduct = new Product(name, purchasePrice, sellingPrice, stockQuantity, lowStockThreshold);
         products.add(newProduct);
         
+        // If initial stock quantity > 0, create a purchase transaction
+        if (stockQuantity > 0) {
+            Transaction purchaseTransaction = new Transaction(Transaction.TransactionType.PURCHASE,
+                                                             newProduct.getId(), newProduct.getName(),
+                                                             stockQuantity, purchasePrice);
+            transactions.add(purchaseTransaction);
+            saveTransactions();
+        }
+        
         // Save to file
         saveProducts();
         
         System.out.println("------------------------------------------------------------------------------------");
-        System.out.println("Product added successfully....Press Enter to continue");
+        if (stockQuantity > 0) {
+            System.out.println("Product added successfully!");
+            System.out.println("Purchase transaction recorded: " + stockQuantity + " units at $" + purchasePrice + " per unit");
+        } else {
+            System.out.println("Product added successfully!");
+        }
+        System.out.println("Press Enter to continue");
         scanner.nextLine();
     }
     
