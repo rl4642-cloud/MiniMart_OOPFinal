@@ -167,16 +167,8 @@ public class MiniMart {
             return;
         }
         
-        System.out.print("Initial Stock Quantity: ");
+        // Initial stock quantity is always 0 for new products
         int stockQuantity = 0;
-        try {
-            stockQuantity = Integer.parseInt(scanner.nextLine().trim());
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid quantity format. Please enter a valid number.");
-            System.out.println("Press Enter to continue");
-            scanner.nextLine();
-            return;
-        }
         
         System.out.print("Low Stock Threshold: ");
         int lowStockThreshold = 0;
@@ -189,29 +181,15 @@ public class MiniMart {
             return;
         }
         
-        // Create new product
+        // Create new product with initial stock of 0
         Product newProduct = new Product(name, purchasePrice, sellingPrice, stockQuantity, lowStockThreshold);
         products.add(newProduct);
-        
-        // If initial stock quantity > 0, create a purchase transaction
-        if (stockQuantity > 0) {
-            Transaction purchaseTransaction = new Transaction(Transaction.TransactionType.PURCHASE,
-                                                             newProduct.getId(), newProduct.getName(),
-                                                             stockQuantity, purchasePrice);
-            transactions.add(purchaseTransaction);
-            saveTransactions();
-        }
         
         // Save to file
         saveProducts();
         
         System.out.println("------------------------------------------------------------------------------------");
-        if (stockQuantity > 0) {
-            System.out.println("Product added successfully!");
-            System.out.println("Purchase transaction recorded: " + stockQuantity + " units at $" + purchasePrice + " per unit");
-        } else {
-            System.out.println("Product added successfully!");
-        }
+        System.out.println("Product added successfully!");
         System.out.println("Press Enter to continue");
         scanner.nextLine();
     }
