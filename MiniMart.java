@@ -208,7 +208,7 @@ public class MiniMart {
             return;
         }
         
-        displayAllProducts();
+
         System.out.print("\nEnter the Product ID to edit: ");
         
         try {
@@ -304,7 +304,6 @@ public class MiniMart {
             return;
         }
         
-        displayAllProducts();
         System.out.print("\nEnter the Product ID to delete: ");
         
         try {
@@ -349,8 +348,8 @@ public class MiniMart {
             scanner.nextLine();
             return;
         }
-        
-        displayAllProducts();
+    
+
         System.out.print("\nEnter the Product ID: ");
         
         try {
@@ -417,7 +416,7 @@ public class MiniMart {
             return;
         }
         
-        displayAllProducts();
+       
         System.out.print("\nEnter the Product ID: ");
         
         try {

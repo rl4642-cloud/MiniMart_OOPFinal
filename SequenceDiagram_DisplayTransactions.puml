@@ -1,0 +1,62 @@
+@startuml MiniMart Sequence Diagram - Display All Transactions
+
+title MiniMart - Display All Transactions Sequence Diagram
+
+actor "Store Manager" as Manager
+participant "MiniMart" as MiniMart
+participant "Transaction" as Transaction
+participant "ArrayList<Transaction>" as TransactionList
+participant "Scanner" as Scanner
+participant "System.out" as Console
+
+== Display All Transactions Flow ==
+Manager -> MiniMart: select option (3) from main menu
+activate MiniMart
+MiniMart -> MiniMart: displayAllTransactions()
+activate MiniMart
+
+== Check Transactions ==
+MiniMart -> TransactionList: isEmpty()
+TransactionList --> MiniMart: false
+
+== Count Transactions ==
+MiniMart -> MiniMart: purchaseCount = 0
+MiniMart -> MiniMart: saleCount = 0
+
+loop for each transaction
+    MiniMart -> Transaction: getType()
+    Transaction --> MiniMart: TransactionType
+    
+    alt type is PURCHASE
+        MiniMart -> MiniMart: purchaseCount++
+    else type is SALE
+        MiniMart -> MiniMart: saleCount++
+    end
+end
+
+== Display Summary ==
+MiniMart -> Console: print "Total Transactions: " + total
+MiniMart -> Console: print "(Purchases: " + purchaseCount + ", Sales: " + saleCount + ")"
+
+== Display All Transactions ==
+MiniMart -> Console: print "All Transactions:"
+MiniMart -> Console: print table header
+
+loop for each transaction
+    MiniMart -> Transaction: displayTransaction()
+    activate Transaction
+    Transaction -> Transaction: getType()
+    Transaction --> Transaction: TransactionType
+    Transaction -> Console: printf(transactionId, type, productId, productName, quantity, unitPrice, totalAmount)
+    deactivate Transaction
+end
+
+== Return to Menu ==
+MiniMart -> Console: print "Press Enter to continue"
+MiniMart -> Scanner: nextLine() - wait for Enter
+MiniMart --> Manager: return to main menu
+deactivate MiniMart
+deactivate MiniMart
+
+@enduml
+

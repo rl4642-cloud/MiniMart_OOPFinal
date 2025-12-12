@@ -1,0 +1,300 @@
+@startuml MiniMart Sequence Diagram
+
+title MiniMart - Sequence Diagram\nBased on Implementation
+
+actor "Store Manager" as Manager
+participant "Main" as Main
+participant "MiniMart" as MiniMart
+participant "Product" as Product
+participant "Transaction" as Transaction
+participant "ArrayList<Product>" as ProductList
+participant "ArrayList<Transaction>" as TransactionList
+database "File System" as Files
+
+== System Initialization ==
+Manager -> Main: start application
+activate Main
+Main -> MiniMart: new MiniMart()
+activate MiniMart
+MiniMart -> MiniMart: new ArrayList<Product>()
+MiniMart -> MiniMart: new ArrayList<Transaction>()
+MiniMart -> MiniMart: new Scanner(System.in)
+MiniMart -> MiniMart: loadData()
+activate MiniMart
+MiniMart -> MiniMart: loadProducts()
+activate MiniMart
+MiniMart -> Files: check if products.bin exists
+alt file exists
+    MiniMart -> Files: open ObjectInputStream
+    Files --> MiniMart: file stream
+    MiniMart -> Files: readInt() - productCount
+    Files --> MiniMart: productCount
+    MiniMart -> Product: setProductCount(productCount)
+    MiniMart -> Files: readInt() - nextId
+    Files --> MiniMart: nextId
+    MiniMart -> Product: setNextId(nextId)
+    loop for each product
+        MiniMart -> Files: readObject()
+        Files --> MiniMart: Product object
+        MiniMart -> ProductList: add(product)
+    end
+    MiniMart -> Files: close stream
+else file does not exist
+    MiniMart -> MiniMart: print "Starting with empty catalog"
+end
+deactivate MiniMart
+MiniMart -> MiniMart: loadTransactions()
+activate MiniMart
+MiniMart -> Files: check if transactions.bin exists
+alt file exists
+    MiniMart -> Files: open ObjectInputStream
+    Files --> MiniMart: file stream
+    MiniMart -> Files: readInt() - transactionCount
+    Files --> MiniMart: transactionCount
+    MiniMart -> Transaction: setTransactionCount(transactionCount)
+    MiniMart -> Files: readInt() - nextTransactionId
+    Files --> MiniMart: nextTransactionId
+    MiniMart -> Transaction: setNextTransactionId(nextTransactionId)
+    loop for each transaction
+        MiniMart -> Files: readObject()
+        Files --> MiniMart: Transaction object
+        MiniMart -> TransactionList: add(transaction)
+    end
+    MiniMart -> Files: close stream
+end
+deactivate MiniMart
+deactivate MiniMart
+MiniMart --> Main: MiniMart instance
+deactivate MiniMart
+Main -> MiniMart: run()
+activate MiniMart
+
+== Display Inventory Overview ==
+Manager -> MiniMart: select option (1)
+activate MiniMart
+MiniMart -> MiniMart: displayInventoryOverview()
+activate MiniMart
+MiniMart -> ProductList: isEmpty()
+ProductList --> MiniMart: false
+MiniMart -> ProductList: create copy
+MiniMart -> MiniMart: sort by Product::getName
+loop for each product
+    MiniMart -> Product: getName()
+    Product --> MiniMart: name
+end
+MiniMart -> MiniMart: display table header
+loop for each product
+    MiniMart -> Product: displayProduct()
+    activate Product
+    Product -> Product: isLowStock()
+    Product --> Product: boolean
+    Product -> System.out: printf(...)
+    deactivate Product
+end
+MiniMart -> MiniMart: check low stock alerts
+loop for each product
+    MiniMart -> Product: isLowStock()
+    Product --> MiniMart: boolean
+end
+MiniMart -> MiniMart: displayInventorySubMenu()
+MiniMart --> Manager: show submenu
+deactivate MiniMart
+
+== Add Product Flow ==
+Manager -> MiniMart: select option (1) from submenu
+activate MiniMart
+Manager -> MiniMart: enter product details
+MiniMart -> Scanner: nextLine() - name
+Scanner --> MiniMart: name
+MiniMart -> Scanner: nextLine() - purchasePrice
+Scanner --> MiniMart: purchasePrice (String)
+MiniMart -> MiniMart: Double.parseDouble()
+MiniMart -> Scanner: nextLine() - sellingPrice
+Scanner --> MiniMart: sellingPrice (String)
+MiniMart -> MiniMart: Double.parseDouble()
+MiniMart -> MiniMart: stockQuantity = 0
+MiniMart -> Scanner: nextLine() - threshold
+Scanner --> MiniMart: threshold (String)
+MiniMart -> MiniMart: Integer.parseInt()
+MiniMart -> Product: new Product(name, purchasePrice, sellingPrice, 0, threshold)
+activate Product
+Product -> Product: nextId++
+Product -> Product: assign id
+Product -> Product: productCount++
+Product --> MiniMart: new Product instance
+deactivate Product
+MiniMart -> ProductList: add(newProduct)
+MiniMart -> MiniMart: saveProducts()
+activate MiniMart
+MiniMart -> Files: open ObjectOutputStream
+MiniMart -> Files: writeInt(products.size())
+MiniMart -> Files: writeInt(Product.getNextId())
+loop for each product
+    MiniMart -> Files: writeObject(product)
+end
+MiniMart -> Files: flush()
+MiniMart -> Files: close stream
+deactivate MiniMart
+MiniMart --> Manager: "Product added successfully"
+deactivate MiniMart
+
+== Record Purchase Flow ==
+Manager -> MiniMart: select option (4) from submenu
+activate MiniMart
+MiniMart -> MiniMart: displayAllProducts()
+activate MiniMart
+loop for each product
+    MiniMart -> Product: displayProduct()
+    Product --> MiniMart: product info
+end
+deactivate MiniMart
+Manager -> MiniMart: enter product ID and quantity
+MiniMart -> Scanner: nextLine() - productId
+Scanner --> MiniMart: productId (String)
+MiniMart -> MiniMart: Integer.parseInt()
+MiniMart -> MiniMart: findProductById(productId)
+activate MiniMart
+MiniMart -> ProductList: iterate
+loop for each product
+    MiniMart -> Product: getId()
+    Product --> MiniMart: id
+end
+MiniMart --> MiniMart: Product found
+deactivate MiniMart
+MiniMart -> Scanner: nextLine() - quantity
+Scanner --> MiniMart: quantity (String)
+MiniMart -> MiniMart: Integer.parseInt()
+MiniMart -> Product: increaseStock(quantity)
+activate Product
+Product -> Product: stockQuantity += quantity
+Product --> MiniMart: stock updated
+deactivate Product
+MiniMart -> Transaction: new Transaction(PURCHASE, productId, name, quantity, purchasePrice)
+activate Transaction
+Transaction -> Transaction: nextTransactionId++
+Transaction -> Transaction: assign transactionId
+Transaction -> Transaction: calculate totalAmount
+Transaction -> Transaction: transactionCount++
+Transaction --> MiniMart: new Transaction instance
+deactivate Transaction
+MiniMart -> TransactionList: add(purchase)
+MiniMart -> MiniMart: saveProducts()
+MiniMart -> MiniMart: saveTransactions()
+activate MiniMart
+MiniMart -> Files: open ObjectOutputStream for transactions
+MiniMart -> Files: writeInt(transactions.size())
+MiniMart -> Files: writeInt(Transaction.getNextTransactionId())
+loop for each transaction
+    MiniMart -> Files: writeObject(transaction)
+end
+MiniMart -> Files: flush()
+MiniMart -> Files: close stream
+deactivate MiniMart
+MiniMart --> Manager: "Purchase recorded successfully"
+deactivate MiniMart
+
+== Record Sale Flow ==
+Manager -> MiniMart: select option (5) from submenu
+activate MiniMart
+MiniMart -> MiniMart: displayAllProducts()
+Manager -> MiniMart: enter product ID and quantity
+MiniMart -> MiniMart: findProductById(productId)
+MiniMart --> MiniMart: Product found
+MiniMart -> Product: getStockQuantity()
+Product --> MiniMart: current stock
+alt sufficient stock
+    MiniMart -> Product: decreaseStock(quantity)
+    activate Product
+    Product -> Product: check if stockQuantity >= quantity
+    Product -> Product: stockQuantity -= quantity
+    Product --> MiniMart: true (success)
+    deactivate Product
+    MiniMart -> MiniMart: calculate revenue = quantity * sellingPrice
+    MiniMart -> MiniMart: calculate profit = quantity * (sellingPrice - purchasePrice)
+    MiniMart -> Product: getSellingPrice()
+    Product --> MiniMart: sellingPrice
+    MiniMart -> Transaction: new Transaction(SALE, productId, name, quantity, sellingPrice)
+    activate Transaction
+    Transaction -> Transaction: nextTransactionId++
+    Transaction -> Transaction: assign transactionId
+    Transaction -> Transaction: calculate totalAmount
+    Transaction -> Transaction: transactionCount++
+    Transaction --> MiniMart: new Transaction instance
+    deactivate Transaction
+    MiniMart -> TransactionList: add(sale)
+    MiniMart -> MiniMart: saveProducts()
+    MiniMart -> MiniMart: saveTransactions()
+    MiniMart --> Manager: "Sale recorded successfully"
+else insufficient stock
+    MiniMart --> Manager: "ERROR: Insufficient stock!"
+end
+deactivate MiniMart
+
+== Display Total Profit Flow ==
+Manager -> MiniMart: select option (2) from main menu
+activate MiniMart
+MiniMart -> MiniMart: displayTotalProfit()
+activate MiniMart
+MiniMart -> MiniMart: totalProfit = 0.0
+MiniMart -> MiniMart: saleCount = 0
+loop for each transaction
+    MiniMart -> Transaction: getType()
+    Transaction --> MiniMart: TransactionType
+    alt transaction type is SALE
+        MiniMart -> Transaction: getProductId()
+        Transaction --> MiniMart: productId
+        MiniMart -> MiniMart: findProductById(productId)
+        MiniMart --> MiniMart: Product
+        MiniMart -> Product: getPurchasePrice()
+        Product --> MiniMart: purchasePrice
+        MiniMart -> Transaction: getQuantity()
+        Transaction --> MiniMart: quantity
+        MiniMart -> Transaction: getUnitPrice()
+        Transaction --> MiniMart: sellingPrice
+        MiniMart -> MiniMart: profit = (sellingPrice - purchasePrice) * quantity
+        MiniMart -> MiniMart: totalProfit += profit
+        MiniMart -> MiniMart: saleCount++
+    end
+end
+MiniMart -> System.out: print total profit report
+loop for each sale transaction
+    MiniMart -> Transaction: displayTransaction()
+    activate Transaction
+    Transaction -> System.out: printf(...)
+    deactivate Transaction
+end
+MiniMart --> Manager: profit report displayed
+deactivate MiniMart
+deactivate MiniMart
+
+== Display All Transactions Flow ==
+Manager -> MiniMart: select option (3) from main menu
+activate MiniMart
+MiniMart -> MiniMart: displayAllTransactions()
+activate MiniMart
+MiniMart -> TransactionList: isEmpty()
+TransactionList --> MiniMart: false
+MiniMart -> MiniMart: purchaseCount = 0
+MiniMart -> MiniMart: saleCount = 0
+loop for each transaction
+    MiniMart -> Transaction: getType()
+    Transaction --> MiniMart: TransactionType
+    alt type is PURCHASE
+        MiniMart -> MiniMart: purchaseCount++
+    else type is SALE
+        MiniMart -> MiniMart: saleCount++
+    end
+end
+MiniMart -> System.out: print transaction summary
+loop for each transaction
+    MiniMart -> Transaction: displayTransaction()
+    activate Transaction
+    Transaction -> System.out: printf(...)
+    deactivate Transaction
+end
+MiniMart --> Manager: all transactions displayed
+deactivate MiniMart
+deactivate MiniMart
+
+@enduml
+
